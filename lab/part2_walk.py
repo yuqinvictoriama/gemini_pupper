@@ -59,7 +59,40 @@ def check_move(vx: float, vy: float, wz_deg: float, duration: float, limits: Mov
     # 3. The duration must be more than 0 and at most limits.duration_max.
     # 4. Too far: speed * duration > limits.distance_max, where speed = (vx**2 + vy**2) ** 0.5.
     # 5. Nothing wrong: return None.
-    return "TODO 2 is not written yet (check_move in lab/part2_walk.py)"
+
+    # 1. Check if the robot is moving too fast.
+    if abs(vx) > limits.vx_max or abs(vy) > limits.vy_max or abs(wz_deg) > limits.wz_max:
+        return (
+            f"Too fast: |vx| must be at most {limits.vx_max} m/s, "
+            f"|vy| at most {limits.vy_max} m/s, "
+            f"and |wz_deg| at most {limits.wz_max} deg/s."
+        )
+
+    # 2. Check if all movement speeds are too small.
+    if (abs(vx) < limits.vx_min and
+        abs(vy) < limits.vy_min and
+        abs(wz_deg) < limits.wz_min):
+        return (
+            f"Too slow: at least one movement speed must reach "
+            f"vx_min={limits.vx_min} m/s, "
+            f"vy_min={limits.vy_min} m/s, "
+            f"or wz_min={limits.wz_min} deg/s."
+        )
+
+    # 3. Check duration.
+    if duration <= 0 or duration > limits.duration_max:
+        return f"Invalid duration: must be more than 0 and at most {limits.duration_max} s."
+
+    # 4. Check total distance.
+    speed = (vx**2 + vy**2) ** 0.5
+    distance = speed * duration
+
+    if distance > limits.distance_max:
+        return f"Too far: distance must be at most {limits.distance_max} m."
+
+    # 5. All checks passed.
+    return None
+
     # ====================================
 
 
@@ -139,12 +172,26 @@ async def walk(robot: Robot, vx: float, vy: float, wz_deg: float, duration: floa
 #   - a move check_move refuses comes back as a failure with check_move's reason
 #   Test: python3 lab/test.py todo3  (turn is checked first, on its own)
 # ========== TODO 3: YOUR CODE HERE ==========
+
 @tool(
     "turn",
-    "TODO 3: describe the turn tool for Gemini.",
-    direction=Param("string", "TODO 3", enum=["left", "right"]),
-    angle=Param("number", "TODO 3", required=False),
+    "Turn Pupper left or right in place by a specified angle in degrees. "
+    "Call this tool before saying Pupper has turned. "
+    "Wait for the tool result to confirm success. "
+    "Do not claim the turn happened if the tool fails or refuses.",
+    direction=Param(
+        "string",
+        "Direction to turn: 'left' for counter-clockwise or 'right' for clockwise.",
+        enum=["left", "right"]
+    ),
+    angle=Param(
+        "number",
+        "Angle to turn in degrees. Defaults to 90 degrees if not provided. "
+        "Must be positive.",
+        required=False
+    ),
 )
+
 async def turn_tool(robot: Robot, direction: str, angle: float = 90.0) -> Result:
     # Turn in place: no forward or sideways speed, just a turning speed, for as long
     # as the angle takes.
@@ -154,7 +201,15 @@ async def turn_tool(robot: Robot, direction: str, angle: float = 90.0) -> Result
     # 2. How long it takes: seconds = abs(angle) / turn_speed
     #    (90 degrees at 60 deg/s takes 1.5 s)
     # 3. return await walk(robot, 0.0, 0.0, wz_deg, seconds)
-    return not_written("TODO 3", "turn in lab/part2_walk.py")
+    turn_speed = robot.speeds().turn
+
+    wz_deg = turn_speed
+    if direction == "right":
+        wz_deg = -turn_speed
+
+    seconds = abs(angle) / turn_speed
+
+    return await walk(robot, 0.0, 0.0, wz_deg, seconds)
 
 
 @tool(
