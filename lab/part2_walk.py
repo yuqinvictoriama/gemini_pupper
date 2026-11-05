@@ -209,7 +209,7 @@ async def turn_tool(robot: Robot, direction: str, angle: float = 90.0) -> Result
 
     seconds = abs(angle) / turn_speed
 
-    return await (robot, 0.0, 0.0, wz_deg, seconds)
+    return await walk(robot, 0.0, 0.0, wz_deg, seconds)
 
 
 @tool(

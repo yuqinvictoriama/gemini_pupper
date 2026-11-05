@@ -75,9 +75,10 @@ async def prepare_to_move(robot: Robot) -> str:
 # ========== TODO 6: YOUR CODE HERE ==========
 @tool(
     "follow",
-    "In follow mode, Pupper automatically follows the person it tracks."
-    "Do not stop follow mode when talking or answering questions. " 
-    "Calling any motion tool ends follow mode", 
+    "Start or stop follow mode, where Pupper automatically follows the person it tracks. "
+    "Use enabled=true when the person asks Pupper to follow them, and enabled=false when "
+    "they ask it to stop following. Talking and answering questions keep follow mode on. "
+    "Any motion tool (walk, turn, arc, trick, stand up, lie down) ends it.",
     enabled=Param("boolean", "TODO 6"),
 )
 async def follow_tool(robot: Robot, enabled: bool) -> Result:
