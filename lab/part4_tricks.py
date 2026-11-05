@@ -61,14 +61,20 @@ async def play_trick(robot: Robot, name: str) -> Result:
     # ========== TODO 7: YOUR CODE HERE ==========
     # NOW:
     # 1. trick = robot.tricks.get(name). If it is None, fail, and list the real names: list(robot.tricks).
+    trick = robot.tricks.get(name)
+    if trick is None:
+        return Result(False, f"unknown trick '{name}'; available: {list(robot.tricks)}")
     # 2. note = await prepare_to_move(robot)
+    note = await prepare_to_move(robot)
     # THE JOB:
     # 3. job = lambda: play_policy_trick(robot, trick)
     #    (a lambda is a function in one line: robot.queue calls it later, when it's the trick's turn)
+    job = lambda: play_policy_trick(robot, trick)
     # QUEUE IT:
     # 4. Decide then: which state is Pupper in once the job is done? (Read the card above.)
+    then = LOCOMOTION if not trick.interactive and trick.end_pose == "standing" else trick
     # 5. return with_note(note, await robot.queue(f"trick {name}", job, trick.total_time, then=...))
-    return not_written("TODO 7", "play_trick in lab/part4_tricks.py")
+    return with_note(note, await robot.queue(f"trick {name}", job, trick.total_time, then=then))
     # ====================================
 
 
@@ -148,9 +154,16 @@ async def play_policy_trick(robot: Robot, trick: Trick) -> Result:
 # ========== TODO 8: YOUR CODE HERE ==========
 @tool(
     "play_trick",
-    "TODO 8: describe play_trick for Gemini." + PREPARES_MOVE + "\nTricks:\n{tricks}",
-    name=Param("string", "TODO 8", enum=TRICK_NAMES),
+    "Play one of Pupper's installed tricks, which includes trained motions like sitting, shaking, or dancing."
+    "Each trick below says whether the starting position is standing or lying down."
+    "If Pupper isn't already in that starting pose, stand up or lie down first to match the correct starting position."
+    "A trick keeps its final pose until the next motion, so after a sitting trick Pupper stays sitting."
+    + PREPARES_MOVE + "\nTricks:\n{tricks}",
+    name=Param("string", "The trick to play: one of the names from the Tricks list below.", enum=TRICK_NAMES),
+
 )
 # ====================================
 async def play_trick_tool(robot: Robot, name: str) -> Result:
     return await play_trick(robot, name)
+
+
